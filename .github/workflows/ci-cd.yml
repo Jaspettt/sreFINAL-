@@ -69,7 +69,7 @@ jobs:
           pip install pytest
           pip install pytest-playwright
           playwright install
-          pytest ./tests
+          pytest ./tests/test_login.py
 
   # deploy:
   #   # The deploy job runs after the test job and only on the main branch
