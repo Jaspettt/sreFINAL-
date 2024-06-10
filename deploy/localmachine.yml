@@ -1,0 +1,10 @@
+---
+- name: Copy project files to remote server
+  hosts: localhost
+
+  tasks:
+    - name: Navigate to project folder
+      command: cd /mnt/c/Git/project
+
+    - name: Copy project from local machine to remote server
+      command: rsync -avz --exclude 'node_modules' --exclude '.git' --exclude '.env' -e "ssh -i ~/.ssh/mykey.pem" . ubuntu@ec2-52-201-27-179.compute-1.amazonaws.com:~/app

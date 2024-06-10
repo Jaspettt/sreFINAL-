@@ -1,0 +1,63 @@
+# Specify the version of the docker-compose file format
+version: "3.8"
+volumes:
+  prometheus_data:
+  grafana_data:
+networks:
+  monitoring:
+    driver: bridge
+# Define the services (containers) that make up your application
+services:
+  # The name of the service, which can be used as a hostname within the network
+  flaskblog:
+    # The image to use for this service, either from a registry or built locally
+    image: dogukanurker/flaskblog:latest
+    # The name of the container created from this service
+    container_name: flaskblog
+    # The policy to apply when the container exits (always restart, unless stopped by the user)
+    restart: always
+    # The path to the Dockerfile to build the image, if it does not exist in the registry
+    build: .
+    # The ports to expose from the container to the host (host_port:container_port)
+    ports:
+      - 5000:5000
+    # The volumes to mount from the host to the container (host_path:container_path)
+    volumes:
+      - .:/app
+    networks:
+      - monitoring
+
+  grafana: 
+    container_name: grafana
+    image: grafana/grafana
+    depends_on:
+      - prometheus
+    ports:
+      - 3000:3000
+    volumes: 
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
+    restart: always
+    networks:
+      - monitoring
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+      - ./prometheus-data:/prometheus
+    command: 
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    depends_on:
+      - flaskblog
+    links:
+      - flaskblog:flaskblog
+    restart: unless-stopped
+    networks:
+      - monitoring

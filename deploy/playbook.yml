@@ -1,0 +1,29 @@
+---
+- name: Configure the environment and deploy applicaion to AWS
+  hosts: webservers
+  become: yes
+
+  tasks:
+    - name: Update sys
+      apt:
+        upgrade: yes
+        update_cache: yes
+    
+    - name: Install Python
+      apt:
+        name: python3
+        state: present
+    
+    - name: Install pip for Python
+      apt:
+        name: python3-pip
+        state: present
+
+    - name: Navigate to project dir
+      command: cd ~/app
+    
+    - name: Install dependencies
+      command: pip3 install -r requirements.txt --break-system-packages
+    
+    - name: Start the application
+      command: python3 app.py

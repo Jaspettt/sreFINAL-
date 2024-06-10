@@ -1,0 +1,127 @@
+name: CI-CD
+
+# Trigger the workflow on push or pull request events to the main branch
+on:
+  push:
+    branches: ["main"] # Trigger the workflow on pushes to the main branch
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  # build:
+  #   # Specify that the job should run on a Windows environment
+  #   runs-on: windows-latest
+
+  #   steps:
+  #     # Step 1: Checkout the code from the repository
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+
+  #     # Step 2: Set up Python environment
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v4
+  #       with:
+  #         python-version: "3.12"
+
+  #     # Step 3: Install dependencies required for the project
+  #     - name: Install dependencies
+  #       run: |
+  #         pip install Pipfile
+  #         pip install -r requirements.txt
+
+  #     # Step 4: Lint the code to check for style errors and enforce coding standards
+  #     - name: Lint code
+  #       run: |
+  #         pip install flake8
+  #         flake8 .
+
+  test:
+    # The test job runs after the build job
+    runs-on: windows-latest
+    # needs: build
+    # if: always()
+
+    steps:
+      # Step 5: Checkout the code from the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 6: Set up Python environment
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      # Step 7: Install dependencies required for the project
+      - name: Install dependencies
+        run: |
+          pip install Pipfile
+          pip install -r requirements.txt
+
+      - name: Start Flask app
+        run: |
+          python app.py &
+        env:
+          FLASK_ENV: development
+
+      # - name: Wait for Flask to start
+      #   shell: pwsh
+      #   run: |
+      #     $maxRetries = 10
+      #     $retryCount = 0
+      #     while ($retryCount -lt $maxRetries) {
+      #       try {
+      #         $response = Invoke-WebRequest -Uri http://localhost:5000 -UseBasicParsing
+      #         if ($response.StatusCode -eq 200) {
+      #           Write-Output "Flask application is up and running."
+      #           break
+      #         }
+      #       } catch {
+      #         Start-Sleep -Seconds 1
+      #         $retryCount++
+      #       }
+      #     }
+
+      #     if ($retryCount -eq $maxRetries) {
+      #       Write-Output "Flask application did not start in expected time."
+      #       exit 1
+      #     }
+      - name: Run tests
+        run: |
+          pip install pytest
+          pip install pytest-playwright
+          playwright install
+          pytest ./tests/test_login.py
+
+  # deploy:
+  #   # The deploy job runs after the test job and only on the main branch
+  #   runs-on: windows-latest
+  #   needs: test
+  #   if: github.ref == 'refs/heads/main'
+
+  #   steps:
+  #     # Step 9: Checkout the code from the repository
+  #     - name: Checkout code
+  #       uses: actions/checkout@v2
+
+  #     # Step 10: Set up Python environment
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v2
+  #       with:
+  #         python-version: "3.12"
+
+  #     # Step 11: Install dependencies required for the project
+  #     - name: Install dependencies
+  #       run: |
+  #         python -m venv venv
+  #         .\venv\Scripts\activate
+  #         pip install -r requirements.txt
+
+  #     # Step 12: Deploy the application to Heroku (or any other deployment platform)
+  #     - name: Deploy to Heroku
+  #       env:
+  #         HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+  #       run: |
+  #         .\venv\Scripts\activate
+  #         git remote add heroku https://git.heroku.com/YOUR_HEROKU_APP.git
+  #         git push heroku main
